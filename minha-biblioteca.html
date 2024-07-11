@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minha Biblioteca</title>
+    <style>
+        h1 {border-bottom: inset;}
+        
+        table {
+            text-align: left;            
+        }
+
+        tr:hover {
+            background-color: #ccc;
+        }
+
+        td {
+            border-bottom: 2px solid #000;
+        }
+
+        .editTitle,
+        .editAuthor,
+        .editPublisher, 
+        .editEdition,
+        .editYear, 
+        .editPages,
+        .editPrice {
+            text-align: left;
+            color: #090;
+            padding-right: 15px;
+            cursor: pointer;
+        }
+        
+        .exclui {
+            color: #900;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="tudo">
+        <h1>Minha Biblioteca</h1>
+        <form>
+            <p>
+                Título......: <input type="text" id="title" required autofocus>
+            </p>
+            <p>
+                Autor(es): <input type="text" id="author" required>
+            </p>
+            <p>
+                Editora....: <input type="text" id="publisher" required>
+            </p>
+            <p>
+                Edição.....: <input type="number" id="edition" min="1" required>
+            </p>
+            <p>
+                Ano.........: <input type="number" id="year" min="1" required>
+            </p>
+            <p>
+                Páginas...: <input type="number" id="pages" min="1" required>
+            </p>
+            <p>
+                Preço.......: <input type="number" id="price" min="0" step="0.01" required>
+            </p>
+            <input type="submit" value="Cadastrar">
+            <input type="button" id="btSalvar" value="Salvar">
+            <input type="button" id="btImprimir" value="Imprimir">
+            <input type="file" id="btCarregar">
+        </form>
+        <h3 id="infoGeral">Quantidade de livros: 0 | Total (R$): 0</h3>
+        <table>
+            <tr>
+                <th>Título</th>
+                <th></th>
+                <th>Autor(es)</th>
+                <th></th>
+                <th>Editora</th>
+                <th></th>
+                <th>Edição</th>
+                <th></th>
+                <th>Ano</th>
+                <th></th>
+                <th>Páginas</th>
+                <th></th>
+                <th>Preço (R$)</th>
+                <th></th>
+                <th></th>
+            </tr>
+        </table>
+    </div>
+    <script>
+        const form = document.querySelector("form");
+        const infoGeral = document.querySelector("#infoGeral");
+        const table = document.querySelector("table");
+
+        let livros = [];
+
+        form.addEventListener("submit", cadastrarLivro);
+        form.btSalvar.addEventListener("click", salvarLivros);
+        form.btImprimir.addEventListener("click", imprimirTabelaDeLivros);
+        form.btCarregar.addEventListener("change", carregarLivros);
+        table.addEventListener("click", aplicarAcoes);
+
+        // Funções principais do programa em ordem de referência
+        function cadastrarLivro(e) {
+            e.preventDefault();
+
+            const livro = {
+                title: form.title.value,
+                author: form.author.value,
+                publisher: form.publisher.value,
+                edition: Number(form.edition.value),
+                year: Number(form.year.value),
+                pages: Number(form.pages.value),
+                price: Number(form.price.value)
+            }
+
+            livros.push(livro);
+            inserirLivroNaTabela(livro);
+            processarInfosGerais();
+
+            form.reset();
+            form.title.focus();
+        }        
+
+        function salvarLivros() {
+            ordenarPorTitulo(livros);
+
+            const arquivo = new Blob([JSON.stringify(livros)], { type: "text/plain" });
+
+            const link = document.createElement("a");
+            link.setAttribute("href", URL.createObjectURL(arquivo));
+            link.setAttribute("download", "livros.json");
+            link.click();
+        }       
+
+        function imprimirTabelaDeLivros() {
+            const janela = window.open();
+            const h3 = janela.document.createElement("h3");
+            const tb = janela.document.createElement("table");
+            h3.innerHTML = infoGeral.innerHTML;
+            tb.innerHTML = table.innerHTML;
+            janela.document.body.appendChild(h3);
+            janela.document.body.appendChild(tb);
+
+            janela.print();
+        }
+
+        function carregarLivros(e) {
+            const file = e.target.files[0];
+
+            const reader = new FileReader();
+            reader.readAsText(file);
+
+            reader.onload = function () {
+                const conteudo = reader.result;
+                livros = JSON.parse(conteudo);
+
+                limparTabela();
+
+                for (const l of livros) {
+                    inserirLivroNaTabela(l);
+                }
+
+                processarInfosGerais();
+            }
+        }
+
+        function aplicarAcoes(e) {
+            const livro = e.target.parentElement.parentElement;
+            const acao = e.target.className;
+
+            switch (acao) {
+                case "editTitle":
+                    editarItem("title", livro, 0);
+                    break;
+                case "editAuthor":
+                    editarItem("author", livro, 2);
+                    break;
+                case "editPublisher":
+                    editarItem("publisher", livro, 4);    
+                    break;
+                case "editEdition":
+                    editarItem("edition", livro, 6);
+                    break;
+                case "editYear":
+                    editarItem("year", livro, 8);
+                    break;
+                case "editPages":
+                    editarItem("pages", livro, 10);
+                    break;
+                case "editPrice":
+                    editarItem("price", livro, 12);
+                    processarInfosGerais();
+                    break;
+                case "exclui":
+                    excluiLivro(livro);
+                    processarInfosGerais();
+                    break;
+            }
+        }
+
+        // Funções primitivas úteis na ordem em que aparecem usadas
+        function inserirLivroNaTabela(livro) {
+            const linha = table.insertRow(-1);
+
+            const col1 = linha.insertCell(0);
+            const col2 = linha.insertCell(1);
+            const col3 = linha.insertCell(2);
+            const col4 = linha.insertCell(3);
+            const col5 = linha.insertCell(4);
+            const col6 = linha.insertCell(5);
+            const col7 = linha.insertCell(6);
+            const col8 = linha.insertCell(7);
+            const col9 = linha.insertCell(8);
+            const col10 = linha.insertCell(9);
+            const col11 = linha.insertCell(10);
+            const col12 = linha.insertCell(11);
+            const col13 = linha.insertCell(12);
+            const col14 = linha.insertCell(13);
+            const col15 = linha.insertCell(14);
+
+            col1.innerHTML = livro.title;
+            col2.innerHTML = `<spam class='editTitle' title='Editar Título'>&#9998;</spam>`;
+            col3.innerHTML = livro.author;
+            col4.innerHTML = `<spam class='editAuthor' title='Editar Autor'>&#9998;</spam>`;
+            col5.innerHTML = livro.publisher;
+            col6.innerHTML = `<spam class='editPublisher' title='Editar Editora'>&#9998;</spam>`;
+            col7.innerHTML = livro.edition;
+            col8.innerHTML = `<spam class='editEdition' title='Editar Edição'>&#9998;</spam>`;
+            col9.innerHTML = livro.year;
+            col10.innerHTML = `<spam class='editYear' title='Editar Ano'>&#9998;</spam>`;
+            col11.innerHTML = livro.pages;
+            col12.innerHTML = `<spam class='editPages' title='Editar Páginas'>&#9998;</spam>`;
+            col13.innerHTML = livro.price;
+            col14.innerHTML = `<spam class='editPrice' title='Editar Preço'>&#9998;</spam>`;
+            col15.innerHTML = `<spam class='exclui' title='Excluir'>&#10008</spam>`;
+        }
+
+        function processarInfosGerais() {
+            let total = 0;
+
+            for (const l of livros) {
+                total += l.price;
+            }
+
+            infoGeral.innerText = `Quantidade de livros: ${livros.length} | Total (R$): ${total}`;
+        }
+
+        function ordenarPorTitulo(livros) {
+            livros.sort((a, b) => {
+                const titleA = a.title.toUpperCase();
+                const titleB = b.title.toUpperCase();
+
+                if (titleA < titleB) {
+                    return -1;
+                } else if (titleA > titleB) {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            });
+        }       
+
+        function limparTabela() {
+            table.innerHTML = "<tr>" +
+                "<th>Título</th>" +
+                "<th></th>" +
+                "<th>Autor(es)</th>" +
+                "<th></th>" +
+                "<th>Editora</th>" +
+                "<th></th>" +
+                "<th>Edição</th>" +
+                "<th></th>" +
+                "<th>Ano</th>" +
+                "<th></th>" +
+                "<th>Páginas</th>" +
+                "<th></th>" +
+                "<th>Preço (R$)</th>" +
+                "<th></th>" +
+                "<th></th>" +
+            "</tr>"
+        }
+
+        function editarItem(nomeDoItem, tr, indexDoItem) {
+            const title = tr.children[0].innerText;
+            const thItem = tr.parentElement.children[0].children[indexDoItem];
+            
+            if (confirm(`Deseja editar o item "${thItem.innerText}" do livro "${title}"?`)) {
+                tr.children[indexDoItem].innerText = prompt(`Digite o novo valor para o item "${thItem.innerText}" do livro "${title}":`);
+                
+                for (let i = 0; i < livros.length; i++) {
+                    if (livros[i].title == title) {
+                        if (nomeDoItem == "edition" ||
+                            nomeDoItem == "year" ||
+                            nomeDoItem == "pages" ||
+                            nomeDoItem == "price"
+                        ) {
+                            livros[i][nomeDoItem] = Number(tr.children[indexDoItem].innerText);
+                        } else {
+                            livros[i][nomeDoItem] = tr.children[indexDoItem].innerText;
+                        }
+                    }
+                }
+            }
+        }
+
+        function excluiLivro(tr) {
+            const title = tr.children[0].innerText;
+            
+            if (confirm(`Deseja excluir o livro "${title}"?`)) {
+                tr.remove();
+                
+                for (let i = 0; i < livros.length; i++) {
+                    if (livros[i].title == title) {
+                        livros.splice(i, 1);
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>
