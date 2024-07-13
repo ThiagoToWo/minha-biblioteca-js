@@ -20,13 +20,7 @@
             border-bottom: 2px solid #000;
         }
 
-        .editTitle,
-        .editAuthor,
-        .editPublisher, 
-        .editEdition,
-        .editYear, 
-        .editPages,
-        .editPrice {
+        .clicavel {
             text-align: left;
             color: #090;
             padding-right: 15px;
@@ -146,6 +140,21 @@
             janela.document.body.appendChild(h3);
             janela.document.body.appendChild(tb);
 
+            const botoes = janela.document.querySelectorAll(".clicavel");
+            const celulas = tb.querySelectorAll("td");
+
+            for (const b of botoes) {
+                b.innerHTML = "&nbsp;&nbsp;&nbsp;&nbsp;";
+
+                if (b.classList[0] == "editPrice" || b.classList[0] == "exclui") {
+                    b.style.display = "none";
+                }
+            }
+
+            for (const c of celulas) {
+                c.style.borderBottom = "2px solid #000";
+            }
+
             janela.print();
         }
 
@@ -171,7 +180,7 @@
 
         function aplicarAcoes(e) {
             const livro = e.target.parentElement.parentElement;
-            const acao = e.target.className;
+            const acao = e.target.classList[0];
 
             switch (acao) {
                 case "editTitle":
@@ -197,7 +206,7 @@
                     processarInfosGerais();
                     break;
                 case "exclui":
-                    excluiLivro(livro);
+                    excluirLivro(livro);
                     processarInfosGerais();
                     break;
             }
@@ -224,20 +233,20 @@
             const col15 = linha.insertCell(14);
 
             col1.innerHTML = livro.title;
-            col2.innerHTML = `<spam class='editTitle' title='Editar Título'>&#9998;</spam>`;
+            col2.innerHTML = `<spam class='editTitle clicavel' title='Editar Título'>&#9998;</spam>`;
             col3.innerHTML = livro.author;
-            col4.innerHTML = `<spam class='editAuthor' title='Editar Autor'>&#9998;</spam>`;
+            col4.innerHTML = `<spam class='editAuthor clicavel' title='Editar Autor'>&#9998;</spam>`;
             col5.innerHTML = livro.publisher;
-            col6.innerHTML = `<spam class='editPublisher' title='Editar Editora'>&#9998;</spam>`;
+            col6.innerHTML = `<spam class='editPublisher clicavel' title='Editar Editora'>&#9998;</spam>`;
             col7.innerHTML = livro.edition;
-            col8.innerHTML = `<spam class='editEdition' title='Editar Edição'>&#9998;</spam>`;
+            col8.innerHTML = `<spam class='editEdition clicavel' title='Editar Edição'>&#9998;</spam>`;
             col9.innerHTML = livro.year;
-            col10.innerHTML = `<spam class='editYear' title='Editar Ano'>&#9998;</spam>`;
+            col10.innerHTML = `<spam class='editYear clicavel' title='Editar Ano'>&#9998;</spam>`;
             col11.innerHTML = livro.pages;
-            col12.innerHTML = `<spam class='editPages' title='Editar Páginas'>&#9998;</spam>`;
+            col12.innerHTML = `<spam class='editPages clicavel' title='Editar Páginas'>&#9998;</spam>`;
             col13.innerHTML = livro.price;
-            col14.innerHTML = `<spam class='editPrice' title='Editar Preço'>&#9998;</spam>`;
-            col15.innerHTML = `<spam class='exclui' title='Excluir'>&#10008</spam>`;
+            col14.innerHTML = `<spam class='editPrice clicavel' title='Editar Preço'>&#9998;</spam>`;
+            col15.innerHTML = `<spam class='exclui clicavel' title='Excluir'>&#10008</spam>`;
         }
 
         function processarInfosGerais() {
@@ -308,7 +317,7 @@
             }
         }
 
-        function excluiLivro(tr) {
+        function excluirLivro(tr) {
             const title = tr.children[0].innerText;
             
             if (confirm(`Deseja excluir o livro "${title}"?`)) {
