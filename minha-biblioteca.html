@@ -6,10 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Minha Biblioteca</title>
     <style>
-        h1 {border-bottom: inset;}
-        
+        h1 {
+            border-bottom: inset;
+        }
+
         table {
-            text-align: left;            
+            text-align: left;
         }
 
         tr:hover {
@@ -26,7 +28,7 @@
             padding-right: 15px;
             cursor: pointer;
         }
-        
+
         .exclui {
             color: #900;
             cursor: pointer;
@@ -37,7 +39,7 @@
 <body>
     <div id="tudo">
         <h1>Minha Biblioteca</h1>
-        <form>
+        <form id="formInfos">
             <p>
                 Título......: <input type="text" id="title" required autofocus>
             </p>
@@ -64,6 +66,22 @@
             <input type="button" id="btImprimir" value="Imprimir">
             <input type="file" id="btCarregar">
         </form>
+        <form id="formPesquisa">
+            <p>
+                Pesquisa: <input type="text" id="pesquisa">
+            </p>
+            <p>
+                <input type="radio" name="item" checked> Título
+                <input type="radio" name="item"> Autor(es)
+                <input type="radio" name="item"> Editora
+                <input type="radio" name="item"> Edição
+                <input type="radio" name="item"> Ano
+                <input type="radio" name="item"> Páginas (máximo)
+                <input type="radio" name="item"> Preço (máximo)
+            </p>
+            <input type="submit" value="Pesquisar">
+            <input type="button" id="btRetornar" value="Exibir Todos os Livros">
+        </form>
         <h3 id="infoGeral">Quantidade de livros: 0 | Total (R$): 0</h3>
         <table>
             <tr>
@@ -86,16 +104,19 @@
         </table>
     </div>
     <script>
-        const form = document.querySelector("form");
+        const formInfos = document.querySelector("#formInfos");
+        const formPesquisa = document.querySelector("#formPesquisa");
         const infoGeral = document.querySelector("#infoGeral");
         const table = document.querySelector("table");
 
         let livros = [];
 
-        form.addEventListener("submit", cadastrarLivro);
-        form.btSalvar.addEventListener("click", salvarLivros);
-        form.btImprimir.addEventListener("click", imprimirTabelaDeLivros);
-        form.btCarregar.addEventListener("change", carregarLivros);
+        formInfos.addEventListener("submit", cadastrarLivro);
+        formInfos.btSalvar.addEventListener("click", salvarLivros);
+        formInfos.btImprimir.addEventListener("click", imprimirTabelaDeLivros);
+        formInfos.btCarregar.addEventListener("change", carregarLivros);
+        formPesquisa.addEventListener("submit", pesquisarLivros);
+        formPesquisa.btRetornar.addEventListener("click", exibirTodosOsLivros);
         table.addEventListener("click", aplicarAcoes);
 
         // Funções principais do programa em ordem de referência
@@ -103,22 +124,29 @@
             e.preventDefault();
 
             const livro = {
-                title: form.title.value,
-                author: form.author.value,
-                publisher: form.publisher.value,
-                edition: Number(form.edition.value),
-                year: Number(form.year.value),
-                pages: Number(form.pages.value),
-                price: Number(form.price.value)
+                title: formInfos.title.value,
+                author: formInfos.author.value,
+                publisher: formInfos.publisher.value,
+                edition: Number(formInfos.edition.value),
+                year: Number(formInfos.year.value),
+                pages: Number(formInfos.pages.value),
+                price: Number(formInfos.price.value)
             }
 
             livros.push(livro);
             inserirLivroNaTabela(livro);
-            processarInfosGerais();
+            processarInfosGerais(livros);
 
-            form.reset();
-            form.title.focus();
-        }        
+            formInfos.title.value = "";
+            formInfos.author.value = "";
+            formInfos.publisher.value = "";
+            formInfos.edition.value = "";
+            formInfos.year.value = "";
+            formInfos.pages.value = "";
+            formInfos.price.value = "";
+            
+            formInfos.title.focus();
+        }
 
         function salvarLivros() {
             ordenarPorTitulo(livros);
@@ -129,7 +157,7 @@
             link.setAttribute("href", URL.createObjectURL(arquivo));
             link.setAttribute("download", "livros.json");
             link.click();
-        }       
+        }
 
         function imprimirTabelaDeLivros() {
             const janela = window.open();
@@ -168,14 +196,129 @@
                 const conteudo = reader.result;
                 livros = JSON.parse(conteudo);
 
-                limparTabela();
+                inserirLivrosDaLista(livros);
+            }
+        }
 
+        function pesquisarLivros(e) {
+            e.preventDefault();
+
+            const pesquisa = formPesquisa.pesquisa.value.toLowerCase();
+            const itens = document.querySelectorAll("input[type='radio']");
+            let total = 0;
+            const livrosEncontrados = [];
+
+            if (itens[0].checked) { // título selecionado       
                 for (const l of livros) {
-                    inserirLivroNaTabela(l);
+                    const titulo = l.title.toLowerCase();
+                    if (titulo.includes(pesquisa)) {
+                        total += l.price;
+                        livrosEncontrados.push(l);
+                    }
+                }
+            } else if (itens[1].checked) { // autor(es) selecionado
+                for (const l of livros) {
+                    const autor = l.author.toLowerCase();
+                    if (autor.includes(pesquisa)) {
+                        total += l.price;
+                        livrosEncontrados.push(l);
+                    }
+                }
+            } else if (itens[2].checked) { // editora selecionado
+                for (const l of livros) {
+                    const editora = l.publisher.toLowerCase();
+                    if (editora.includes(pesquisa)) {
+                        total += l.price;
+                        livrosEncontrados.push(l);
+                    }
+                }
+            } else if (itens[3].checked) { // edição selecionado
+                if (isNaN(pesquisa)) {
+                    alert("A pesquisa deveria ser um número.");
+                    return;
                 }
 
-                processarInfosGerais();
+                const edicao = Number(pesquisa);
+
+                if (edicao < 1) {
+                    alert("Edição inválida. Deve ser maior ou igual a 1.");
+                    return;
+                }
+
+                for (const l of livros) {
+                    if (l.edition == pesquisa) {
+                        total += l.price;
+                        livrosEncontrados.push(l);
+                    }
+                }
+            } else if (itens[4].checked) { // ano selecionado
+                if (isNaN(pesquisa)) {
+                    alert("A pesquisa deveria ser um número.");
+                    return;
+                }
+
+                const ano = Number(pesquisa);
+
+                if (ano < 1) {
+                    alert("Ano inválido. Deve ser maior ou igual a 1.");
+                    return;
+                }
+
+                for (const l of livros) {
+                    if (l.year == pesquisa) {
+                        total += l.price;
+                        livrosEncontrados.push(l);
+                    }
+                }
+            } else if (itens[5].checked) { // páginas máximo selecionado
+                if (isNaN(pesquisa)) {
+                    alert("A pesquisa deveria ser um número.");
+                    return;
+                }
+
+                const paginas = Number(pesquisa);
+
+                if (paginas < 1) {
+                    alert("Número de páginas inválido. Deve ser maior ou igual a 1.");
+                    return;
+                }
+
+                for (const l of livros) {
+                    if (l.pages <= paginas) {
+                        total += l.price;
+                        livrosEncontrados.push(l);
+                    }
+                }
+            } else { // preço máximo selecionado
+                if (isNaN(pesquisa)) {
+                    alert("A pesquisa deveria ser um número.");
+                    return;
+                }
+                
+                const preco = Number(pesquisa);
+                
+                if (preco < 0) {
+                    alert("Preço inválido. Deve ser maior ou igual a 0.");
+                    return;
+                }
+
+                for (const l of livros) {
+                    if (l.price <= preco) {
+                        total += l.price;
+                        livrosEncontrados.push(l);
+                    }
+                }
             }
+
+            if (livrosEncontrados.length == 0) {
+                alert("Nenhum livro encontrado.");
+            }
+
+            inserirLivrosDaLista(livrosEncontrados);
+        }
+
+        function exibirTodosOsLivros() {
+            inserirLivrosDaLista(livros);
         }
 
         function aplicarAcoes(e) {
@@ -190,7 +333,7 @@
                     editarItem("author", livro, 2);
                     break;
                 case "editPublisher":
-                    editarItem("publisher", livro, 4);    
+                    editarItem("publisher", livro, 4);
                     break;
                 case "editEdition":
                     editarItem("edition", livro, 6);
@@ -203,16 +346,26 @@
                     break;
                 case "editPrice":
                     editarItem("price", livro, 12);
-                    processarInfosGerais();
+                    processarInfosGerais(livros);
                     break;
                 case "exclui":
                     excluirLivro(livro);
-                    processarInfosGerais();
+                    processarInfosGerais(livros);
                     break;
             }
         }
 
-        // Funções primitivas úteis na ordem em que aparecem usadas
+        // Funções úteis
+        function inserirLivrosDaLista(listaDeLivros) {
+            limparTabela();
+
+            for (const l of listaDeLivros) {
+                inserirLivroNaTabela(l);
+            }
+
+            processarInfosGerais(listaDeLivros);
+        }
+
         function inserirLivroNaTabela(livro) {
             const linha = table.insertRow(-1);
 
@@ -249,14 +402,14 @@
             col15.innerHTML = `<spam class='exclui clicavel' title='Excluir'>&#10008</spam>`;
         }
 
-        function processarInfosGerais() {
+        function processarInfosGerais(listaDeLivros) {
             let total = 0;
 
-            for (const l of livros) {
+            for (const l of listaDeLivros) {
                 total += l.price;
             }
 
-            infoGeral.innerText = `Quantidade de livros: ${livros.length} | Total (R$): ${total}`;
+            infoGeral.innerText = `Quantidade de livros: ${listaDeLivros.length} | Total (R$): ${total}`;
         }
 
         function ordenarPorTitulo(livros) {
@@ -272,7 +425,7 @@
                     return 0;
                 }
             });
-        }       
+        }
 
         function limparTabela() {
             table.innerHTML = "<tr>" +
@@ -291,16 +444,16 @@
                 "<th>Preço (R$)</th>" +
                 "<th></th>" +
                 "<th></th>" +
-            "</tr>"
+                "</tr>"
         }
 
         function editarItem(nomeDoItem, tr, indexDoItem) {
             const title = tr.children[0].innerText;
             const thItem = tr.parentElement.children[0].children[indexDoItem];
-            
+
             if (confirm(`Deseja editar o item "${thItem.innerText}" do livro "${title}"?`)) {
                 tr.children[indexDoItem].innerText = prompt(`Digite o novo valor para o item "${thItem.innerText}" do livro "${title}":`);
-                
+
                 for (let i = 0; i < livros.length; i++) {
                     if (livros[i].title == title) {
                         if (nomeDoItem == "edition" ||
@@ -319,10 +472,10 @@
 
         function excluirLivro(tr) {
             const title = tr.children[0].innerText;
-            
+
             if (confirm(`Deseja excluir o livro "${title}"?`)) {
                 tr.remove();
-                
+
                 for (let i = 0; i < livros.length; i++) {
                     if (livros[i].title == title) {
                         livros.splice(i, 1);
