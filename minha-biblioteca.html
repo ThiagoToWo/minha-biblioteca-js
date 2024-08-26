@@ -44,19 +44,19 @@
                 Título......: <input type="text" id="title" required autofocus>
             </p>
             <p>
-                Autor(es): <input type="text" id="author" required>
+                Autor(es): <input type="text" id="author">
             </p>
             <p>
-                Editora....: <input type="text" id="publisher" required>
+                Editora....: <input type="text" id="publisher">
             </p>
             <p>
-                Edição.....: <input type="number" id="edition" min="1" required>
+                Edição.....: <input type="number" id="edition" min="1">
             </p>
             <p>
-                Ano.........: <input type="number" id="year" min="1" required>
+                Ano.........: <input type="number" id="year" min="1">
             </p>
             <p>
-                Páginas...: <input type="number" id="pages" min="1" required>
+                Páginas...: <input type="number" id="pages" min="1">
             </p>
             <p>
                 Preço.......: <input type="number" id="price" min="0" step="0.01" required>
@@ -210,8 +210,8 @@
 
             if (itens[0].checked) { // título selecionado       
                 for (const l of livros) {
-                    const titulo = l.title.toLowerCase();
-                    if (titulo.includes(pesquisa)) {
+                    const titulo = l.title.toLowerCase();                    
+                    if (pesquisa != "" && titulo.includes(pesquisa)) {
                         total += l.price;
                         livrosEncontrados.push(l);
                     }
@@ -219,29 +219,36 @@
             } else if (itens[1].checked) { // autor(es) selecionado
                 for (const l of livros) {
                     const autor = l.author.toLowerCase();
-                    if (autor.includes(pesquisa)) {
-                        total += l.price;
-                        livrosEncontrados.push(l);
+                    if (pesquisa != "") {
+                        if (autor.includes(pesquisa)) {
+                            total += l.price;
+                            livrosEncontrados.push(l);
+                        }
+                    } else {
+                        if (autor == "") {
+                            total += l.price;
+                            livrosEncontrados.push(l);
+                        }
                     }
                 }
             } else if (itens[2].checked) { // editora selecionado
                 for (const l of livros) {
                     const editora = l.publisher.toLowerCase();
-                    if (editora.includes(pesquisa)) {
-                        total += l.price;
-                        livrosEncontrados.push(l);
+                    if (pesquisa != "") {
+                        if (editora.includes(pesquisa)) {
+                            total += l.price;
+                            livrosEncontrados.push(l);
+                        }
+                    } else {
+                        if (editora == "") {
+                            total += l.price;
+                            livrosEncontrados.push(l);
+                        }
                     }
                 }
             } else if (itens[3].checked) { // edição selecionado
                 if (isNaN(pesquisa)) {
                     alert("A pesquisa deveria ser um número.");
-                    return;
-                }
-
-                const edicao = Number(pesquisa);
-
-                if (edicao < 1) {
-                    alert("Edição inválida. Deve ser maior ou igual a 1.");
                     return;
                 }
 
@@ -254,13 +261,6 @@
             } else if (itens[4].checked) { // ano selecionado
                 if (isNaN(pesquisa)) {
                     alert("A pesquisa deveria ser um número.");
-                    return;
-                }
-
-                const ano = Number(pesquisa);
-
-                if (ano < 1) {
-                    alert("Ano inválido. Deve ser maior ou igual a 1.");
                     return;
                 }
 
@@ -462,8 +462,10 @@
                             nomeDoItem == "price"
                         ) {
                             livros[i][nomeDoItem] = Number(tr.children[indexDoItem].innerText);
+                            break;
                         } else {
                             livros[i][nomeDoItem] = tr.children[indexDoItem].innerText;
+                            break;
                         }
                     }
                 }
@@ -480,6 +482,7 @@
                     if (livros[i].title == title) {
                         livros.splice(i, 1);
                     }
+                    break;
                 }
             }
         }
