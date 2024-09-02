@@ -85,6 +85,7 @@
         <h3 id="infoGeral">Quantidade de livros: 0 | Total (R$): 0</h3>
         <table>
             <tr>
+                <th>ID</th>
                 <th>Título</th>
                 <th></th>
                 <th>Autor(es)</th>
@@ -124,6 +125,7 @@
             e.preventDefault();
 
             const livro = {
+                id: Date.now().toString(36).toUpperCase(),
                 title: formInfos.title.value,
                 author: formInfos.author.value,
                 publisher: formInfos.publisher.value,
@@ -322,30 +324,30 @@
         }
 
         function aplicarAcoes(e) {
-            const livro = e.target.parentElement.parentElement;
+            const livro = e.target.parentElement.parentElement; //linha da tabela
             const acao = e.target.classList[0];
 
             switch (acao) {
                 case "editTitle":
-                    editarItem("title", livro, 0);
+                    editarItem("title", livro, 1);
                     break;
                 case "editAuthor":
-                    editarItem("author", livro, 2);
+                    editarItem("author", livro, 3);
                     break;
                 case "editPublisher":
-                    editarItem("publisher", livro, 4);
+                    editarItem("publisher", livro, 5);
                     break;
                 case "editEdition":
-                    editarItem("edition", livro, 6);
+                    editarItem("edition", livro, 7);
                     break;
                 case "editYear":
-                    editarItem("year", livro, 8);
+                    editarItem("year", livro, 9);
                     break;
                 case "editPages":
-                    editarItem("pages", livro, 10);
+                    editarItem("pages", livro, 11);
                     break;
                 case "editPrice":
-                    editarItem("price", livro, 12);
+                    editarItem("price", livro, 13);
                     processarInfosGerais(livros);
                     break;
                 case "exclui":
@@ -384,22 +386,24 @@
             const col13 = linha.insertCell(12);
             const col14 = linha.insertCell(13);
             const col15 = linha.insertCell(14);
+            const col16 = linha.insertCell(15);
 
-            col1.innerHTML = livro.title;
-            col2.innerHTML = `<spam class='editTitle clicavel' title='Editar Título'>&#9998;</spam>`;
-            col3.innerHTML = livro.author;
-            col4.innerHTML = `<spam class='editAuthor clicavel' title='Editar Autor'>&#9998;</spam>`;
-            col5.innerHTML = livro.publisher;
-            col6.innerHTML = `<spam class='editPublisher clicavel' title='Editar Editora'>&#9998;</spam>`;
-            col7.innerHTML = livro.edition;
-            col8.innerHTML = `<spam class='editEdition clicavel' title='Editar Edição'>&#9998;</spam>`;
-            col9.innerHTML = livro.year;
-            col10.innerHTML = `<spam class='editYear clicavel' title='Editar Ano'>&#9998;</spam>`;
-            col11.innerHTML = livro.pages;
-            col12.innerHTML = `<spam class='editPages clicavel' title='Editar Páginas'>&#9998;</spam>`;
-            col13.innerHTML = livro.price;
-            col14.innerHTML = `<spam class='editPrice clicavel' title='Editar Preço'>&#9998;</spam>`;
-            col15.innerHTML = `<spam class='exclui clicavel' title='Excluir'>&#10008</spam>`;
+            col1.innerHTML = `<span style="font-family:monospace; color:#999;">${livro.id}&nbsp;&nbsp;&nbsp;&nbsp;</span>`;
+            col2.innerHTML = livro.title;
+            col3.innerHTML = `<spam class='editTitle clicavel' title='Editar Título'>&#9998;</spam>`;
+            col4.innerHTML = livro.author;
+            col5.innerHTML = `<spam class='editAuthor clicavel' title='Editar Autor'>&#9998;</spam>`;
+            col6.innerHTML = livro.publisher;
+            col7.innerHTML = `<spam class='editPublisher clicavel' title='Editar Editora'>&#9998;</spam>`;
+            col8.innerHTML = livro.edition;
+            col9.innerHTML = `<spam class='editEdition clicavel' title='Editar Edição'>&#9998;</spam>`;
+            col10.innerHTML = livro.year;
+            col11.innerHTML = `<spam class='editYear clicavel' title='Editar Ano'>&#9998;</spam>`;
+            col12.innerHTML = livro.pages;
+            col13.innerHTML = `<spam class='editPages clicavel' title='Editar Páginas'>&#9998;</spam>`;
+            col14.innerHTML = livro.price;
+            col15.innerHTML = `<spam class='editPrice clicavel' title='Editar Preço'>&#9998;</spam>`;
+            col16.innerHTML = `<spam class='exclui clicavel' title='Excluir'>&#10008</spam>`;            
         }
 
         function processarInfosGerais(listaDeLivros) {
@@ -429,6 +433,7 @@
 
         function limparTabela() {
             table.innerHTML = "<tr>" +
+                "<th>ID</th>" +
                 "<th>Título</th>" +
                 "<th></th>" +
                 "<th>Autor(es)</th>" +
@@ -448,23 +453,25 @@
         }
 
         function editarItem(nomeDoItem, tr, indexDoItem) {
-            const title = tr.children[0].innerText;
+            const id = tr.children[0].innerText.trim();
+            const title = tr.children[1].innerText;
             const thItem = tr.parentElement.children[0].children[indexDoItem];
-
+            
             if (confirm(`Deseja editar o item "${thItem.innerText}" do livro "${title}"?`)) {
-                tr.children[indexDoItem].innerText = prompt(`Digite o novo valor para o item "${thItem.innerText}" do livro "${title}":`);
+                const novoValor = prompt(`Digite o novo valor para o item "${thItem.innerText}" do livro "${title}":`);
+                tr.children[indexDoItem].innerText = novoValor;
 
                 for (let i = 0; i < livros.length; i++) {
-                    if (livros[i].title == title) {
+                    if (livros[i].id == id) {
                         if (nomeDoItem == "edition" ||
                             nomeDoItem == "year" ||
                             nomeDoItem == "pages" ||
                             nomeDoItem == "price"
                         ) {
-                            livros[i][nomeDoItem] = Number(tr.children[indexDoItem].innerText);
+                            livros[i][nomeDoItem] = Number(novoValor);
                             break;
                         } else {
-                            livros[i][nomeDoItem] = tr.children[indexDoItem].innerText;
+                            livros[i][nomeDoItem] = novoValor;
                             break;
                         }
                     }
@@ -473,13 +480,14 @@
         }
 
         function excluirLivro(tr) {
-            const title = tr.children[0].innerText;
+            const id = tr.children[0].innerText;
+            const title = tr.children[1].innerText;
 
             if (confirm(`Deseja excluir o livro "${title}"?`)) {
                 tr.remove();
 
                 for (let i = 0; i < livros.length; i++) {
-                    if (livros[i].title == title) {
+                    if (livros[i].id == id) {
                         livros.splice(i, 1);
                     }
                     break;
